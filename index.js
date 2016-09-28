@@ -18,7 +18,7 @@ function updateCloudflareRanges () {
 
     debug('getting IPV4 ranges from cloudflare');
 
-    request.get('https://www.cloudflare.com/ips-v4', function (error, response) {
+    request.get('https://www.cloudflare.com/ips-v4/', function (error, response) {
         if (error) {
             console.log(error.stack);
             cloudflareIpRangesUpdatedAt = new Date();
@@ -30,7 +30,7 @@ function updateCloudflareRanges () {
 
         debug('getting IPV6 ranges from cloudflare');
 
-        request.get('https://www.cloudflare.com/ips-v6', function (error, response) {
+        request.get('https://www.cloudflare.com/ips-v6/', function (error, response) {
             if (error) {
                 throw new Error('express-cf-ip:' + error.message);
             }
