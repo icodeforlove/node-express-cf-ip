@@ -3,6 +3,7 @@ var request = require('request'),
     cloudflareIpRanges = [],
     cloudflareIpRangesUpdatedAt = null,
     cloudflareIpRangesUpdating = false,
+    cloudflareIpRangesInitialized = false,
     queuedRequests = [],
     debug = require('debug')('express-cf-ip');
 
@@ -19,7 +20,10 @@ function updateCloudflareRanges () {
 
     request.get('https://www.cloudflare.com/ips-v4', function (error, response) {
         if (error) {
-            throw new Error('express-cf-ip:' + error.message);
+            console.log(error.stack);
+            cloudflareIpRangesUpdatedAt = new Date();
+            cloudflareIpRangesInitialized = false;
+            return;
         }
 
         newRanges = newRanges.concat(response.body.trim().split('\n'));
@@ -33,6 +37,7 @@ function updateCloudflareRanges () {
 
             newRanges = newRanges.concat(response.body.trim().split('\n'));
 
+            cloudflareIpRangesInitialized = true;
             cloudflareIpRangesUpdating = false;
             cloudflareIpRanges = newRanges;
             cloudflareIpRangesUpdatedAt = new Date();
@@ -57,6 +62,11 @@ module.exports = function expressCfIp(request, response, next) {
     // update daily
     if (cloudflareIpRangesUpdatedAt && (new Date() - cloudflareIpRangesUpdatedAt) > 60 * 60 * 24 * 1000) {
         updateCloudflareRanges();
+    }
+
+    if (cloudflareIpRangesInitialized === false) {
+        // initialization failed but allow request
+        return next();
     }
 
     // queue requests until cloudflares IP's have been set
